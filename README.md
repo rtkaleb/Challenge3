@@ -1,4 +1,8 @@
-# Google Scholar API – SerpApi Integration
+# Google Scholar API – SerpApi Integration with MVC
+A simple Java MVC application that fetches and displays **Google Scholar author profiles** using the **SerpApi Google Scholar API**.  
+The project demonstrates a clean separation of concerns with **Model–View–Controller** architecture.
+
+![MVC Diagram](./images/MVC_diagram.png)
 
 ## 📖 Project Purpose
 The goal of this project is to **explore and document the use of the Google Scholar API through SerpApi**. It includes a technical report summarizing essential API details and a functional GitHub repository with clear documentation for collaboration.
@@ -167,7 +171,150 @@ public class ScholarSearch {
 
 ---
 
-## 7. Conclusion
+
+## 🚀 Features
+- Input: either a **Google Scholar profile URL** or a plain **author_id**.
+- Extracts and displays:
+    - Author name and affiliation
+    - Citation metrics (**Citations, h-index, i10-index**)
+    - Top 5 articles with title, year, publication, and citation count
+- Clean **console view** with formatted tables
+- Error handling with friendly messages
+
+---
+
+## 🛠️ Technologies
+- **Java 17+**
+- **Maven** for dependency management and build
+- **Apache HttpClient 5** – to make HTTP requests
+- **Jackson** – to parse JSON responses
+- **SerpApi** – external API provider for Google Scholar data
+
+---
+
+## 📂 Project Structure
+```
+src/main/java/org/example/scholar/
+│
+├── model/         # Data models (AuthorProfile, etc.)
+├── view/          # ConsoleView: displays data in the console
+├── service/       # SerpApiClient + ScholarUtils (API integration)
+└── controller/    # AuthorController: coordinates MVC flow
+```
+
+---
+
+## ⚙️ Setup
+
+### 1. Clone the repository
+```bash
+git clone https://github.com/your-username/scholar-mvc.git
+cd scholar-mvc
+```
+
+### 2. Configure your SerpApi key
+Get a free API key from [SerpApi](https://serpapi.com/).  
+Set the environment variable `SERPAPI_KEY`:
+
+- **Linux / Mac (bash):**
+  ```bash
+  export SERPAPI_KEY=your_api_key_here
+  ```
+
+- **Windows PowerShell:**
+  ```powershell
+  setx SERPAPI_KEY "your_api_key_here"
+  ```
+
+*(Restart your terminal or IDE after setting the variable)*
+
+---
+
+## ▶️ Build and Run
+
+### Compile with Maven
+```bash
+mvn clean package
+```
+
+### Run with author_id
+```bash
+java -cp target/scholar-mvc-1.0.0.jar org.example.scholar.Main FyYiDG0AAAAJ
+```
+
+### Run with profile URL
+```bash
+java -cp target/scholar-mvc-1.0.0.jar org.example.scholar.Main "https://scholar.google.com/citations?user=FyYiDG0AAAAJ"
+```
+
+---
+
+## 📊 Example Output
+
+```
+=== Google Scholar (SerpApi) - Demo MVC ===
+(SERPAPI_KEY: ****ecd6)
+
+=== AUTHOR PROFILE ===
+Name: Sandra Rodil
+Affiliation: Instituto de Investigaciones en Materiales, Universidad Nacional Autónoma de México
+
+Metrics:
++----------------+---------+
+| Citations      |    8454 |
+| h-index        |      49 |
+| i10-index      |     132 |
++----------------+---------+
+
+Top Articles:
+ - Interpretation of infrared and Raman spectra of amorphous carbon nitrides (2003) · Physical Review B | Citations: 930
+   https://scholar.google.com/citations?view_op=view_citation&citation_for_view=FyYiDG0AAAAJ:u-x6o8ySG0sC
+ - Density, fraction, and cross-sectional structure of amorphous carbon films (2000) · Physical Review B | Citations: 717
+   https://scholar.google.com/citations?view_op=view_citation&citation_for_view=FyYiDG0AAAAJ:u5HHmVD_uO8C
+ ...
+```
+
+---
+## 📌 Utility and Scope Scenarios
+- **Academic Research**: Helps researchers, students, and administrators quickly obtain citation metrics and top publications from Google Scholar profiles.
+- **Institutional Reports**: Can be integrated into university systems to auto-generate performance metrics of faculty members.
+- **Data Analysis**: Provides structured data that can later be extended into dashboards or research analytics platforms.
+
+---
+
+## 🌱 Sustainability
+- The project leverages **SerpApi**, an established API provider, reducing the need for custom scraping (which may break frequently).
+- Code is modular (MVC pattern), making it easy to maintain and extend over time.
+- Open-source approach allows community contributions to ensure long-term project health.
+
+---
+
+## ⚙️ Applicability of Technical Aspects
+- Demonstrates the use of **MVC in Java**, a widely adopted design pattern.
+- Shows integration with an **external REST API** using Apache HttpClient and JSON parsing with Jackson.
+- Can be extended into GUI applications or web backends with minimal changes.
+
+---
+
+## 📈 Scalability, Economic Viability, and Impact
+- **Scalability**: The architecture allows integration with multiple APIs (e.g., OpenAlex, Scopus, PubMed) to broaden coverage beyond Google Scholar.
+- **Economic Viability**: SerpApi has free and paid tiers, making it cost-effective for small projects and scalable for enterprise-level usage.
+- **Impact**: Facilitates data-driven decisions in academia and research policy by providing transparent and structured author metrics.
+
+---
+
+## ⚠️ Notes
+- The **Google Scholar Profiles API** has been discontinued. This project uses the **Google Scholar Author API** via SerpApi.
+- Free SerpApi accounts have **request limits**. If you hit errors like `HTTP 403`, check your quota.
+
+---
+
+## 📜 License
+This project is for **educational purposes** (demonstrating MVC in Java).  
+Check SerpApi’s [Terms of Service](https://serpapi.com/legal) before production use.
+
+
+## Conclusion
 The **Google Scholar API via SerpApi** provides developers with a structured way to query authors, articles, and citation data.
 
 By following this documentation, you can:
