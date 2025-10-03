@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class AuthorSearchResult {
     private String name;
-    private String authorId;   // "author_id" en JSON
+    private String authorId;
     private String affiliations;
     private Integer citedBy;
 

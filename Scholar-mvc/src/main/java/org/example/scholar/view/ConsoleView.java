@@ -1,63 +1,67 @@
 package org.example.scholar.view;
 
 import org.example.scholar.model.AuthorProfile;
-import org.example.scholar.model.AuthorSearchResult;
-import java.util.List;
 
+/**
+ * ConsoleView is responsible for displaying information of an AuthorProfile
+ * and handling user-facing messages. This is the "View" part of the MVC pattern.
+ */
 public class ConsoleView {
 
-    public void showWelcome() {
-        System.out.println("=== Google Scholar (SerpApi) - Demo MVC ===");
-    }
-
-    public void showSearchQuery(String q) {
-        System.out.println("\nBuscando autores por: \"" + q + "\"");
-    }
-
-    public void showSearchResults(List<AuthorSearchResult> results) {
-        if (results == null || results.isEmpty()) {
-            System.out.println("No se encontraron autores.");
+    /**
+     * Print the author profile information to the console.
+     * @param profile AuthorProfile object containing scholar details.
+     */
+    public void showAuthorProfile(AuthorProfile profile) {
+        if (profile == null) {
+            System.out.println("[ERROR] No author profile available.");
             return;
         }
-        System.out.println("\nResultados:");
-        int i = 1;
-        for (AuthorSearchResult r : results) {
-            System.out.printf("%d) %s  [author_id=%s]%n   Afiliación: %s | Citas: %s%n",
-                    i++, r.getName(), r.getAuthorId(),
-                    nullToDash(r.getAffiliations()),
-                    r.getCitedBy() == null ? "-" : r.getCitedBy());
-        }
-    }
 
-    public void showAuthorProfile(AuthorProfile p) {
-        System.out.println("\n=== PERFIL DEL AUTOR ===");
-        System.out.println("Nombre: " + p.getName());
-        System.out.println("Afiliación: " + nullToDash(p.getAffiliations()));
-        if (p.getMetrics() != null) {
-            System.out.printf("Citas: %d | h-index: %d | i10-index: %d%n",
-                    safe(p.getMetrics().citations),
-                    safe(p.getMetrics().hIndex),
-                    safe(p.getMetrics().i10Index));
+        System.out.println();
+        System.out.println("=== AUTHOR PROFILE ===");
+        System.out.println("Name: " + profile.getName());
+        System.out.println("Affiliation: " + profile.getAffiliations());
+
+        // Print metrics in a small table for clarity
+        AuthorProfile.Metrics m = profile.getMetrics();
+        if (m != null) {
+            int citations = (m.citations != null) ? m.citations : 0;
+            int hIndex = (m.hIndex != null) ? m.hIndex : 0;
+            int i10Index = (m.i10Index != null) ? m.i10Index : 0;
+
+            System.out.println();
+            System.out.println("Metrics:");
+            System.out.println("+----------------+---------+");
+            System.out.printf("| %-14s | %7d |\n", "Citations", citations);
+            System.out.printf("| %-14s | %7d |\n", "h-index", hIndex);
+            System.out.printf("| %-14s | %7d |\n", "i10-index", i10Index);
+            System.out.println("+----------------+---------+");
         }
-        System.out.println("\nArtículos destacados:");
-        if (p.getTopArticles() == null || p.getTopArticles().isEmpty()) {
-            System.out.println("  (sin artículos)");
+
+        // Print top articles
+        System.out.println();
+        System.out.println("Top Articles:");
+        if (profile.getTopArticles() != null && !profile.getTopArticles().isEmpty()) {
+            for (AuthorProfile.Article a : profile.getTopArticles()) {
+                System.out.println(" - " + a.title
+                        + " (" + (a.year != null ? a.year : "-") + ") · "
+                        + (a.publication != null ? a.publication : "-")
+                        + " | Citations: " + (a.citedBy != null ? a.citedBy : 0));
+                if (a.link != null) {
+                    System.out.println("   " + a.link);
+                }
+            }
         } else {
-            p.getTopArticles().forEach(a -> {
-                System.out.printf(" - %s (%s) %s | Citas: %s%n",
-                        a.title,
-                        a.year == null ? "-" : a.year.toString(),
-                        a.publication == null ? "" : " · " + a.publication,
-                        a.citedBy == null ? "-" : a.citedBy.toString());
-                System.out.println("   " + (a.link == null ? "" : a.link));
-            });
+            System.out.println("   [No articles found]");
         }
     }
 
+    /**
+     * Print an error message in a consistent format.
+     * @param message The error text to display
+     */
     public void showError(String message) {
-        System.out.println("\n[ERROR] " + message);
+        System.out.println("[ERROR] " + message);
     }
-
-    private static String nullToDash(String s) { return s == null ? "-" : s; }
-    private static int safe(Integer i) { return i == null ? 0 : i; }
 }
