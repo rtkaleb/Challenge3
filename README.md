@@ -1,11 +1,11 @@
-# Google Scholar API – SerpApi Integration with MVC
-A simple Java MVC application that fetches and displays **Google Scholar author profiles** using the **SerpApi Google Scholar API**.  
+# Google Scholar (SerpApi) → SQLite Integration
+A simple Java MVC application that runs **API consumption + database storage (2 researchers × 3 articles each)**, verification, basic error handling, and delivery.
 The project demonstrates a clean separation of concerns with **Model–View–Controller** architecture.
 
 ![MVC Diagram](./images/MVC_diagram.png)
 
 ## 📖 Project Purpose
-The goal of this project is to **explore and document the use of the Google Scholar API through SerpApi**. It includes a technical report summarizing essential API details and a functional GitHub repository with clear documentation for collaboration.
+The goal of this project is to **explore and document the use of the Google Scholar API through SerpApi & manage it with a MDB like SQLite**. It includes a technical report summarizing essential API details and a functional GitHub repository with clear documentation for collaboration.
 
 ---
 
@@ -22,46 +22,31 @@ The goal of this project is to **explore and document the use of the Google Scho
     - Usage limits under the free plan.
     - Code examples in multiple programming languages.
 
+- **A runnable Java app that:**
+    - Calls **SerpApi’s Google Scholar Author** endpoint for **two** author IDs.
+    - Stores **up to 3 articles per author** into a local **SQLite** database file `scholar.db`.
+    - Handles common errors (network/HTTP 4xx–5xx, 429 rate limit, missing fields).
+    - Avoids duplicates using `UNIQUE(researcher_id, title)` with UPSERT.
+- Evidence the integration works:
+    - SQL queries (or the included `Verify.java`) showing **3 rows per author**.
+    - Optional “ID cleanup” migration if you ever pasted IDs with `&hl=...`.
+- Repo updated and accessible to the **Digital NAO** team.
+
 - **GitHub Repository**
     - Contains this README (project overview + full technical report).
     - Configured access for the **Digital NAO team**.
 
 ---
 
-## 📌 Project Relevance
-- Facilitates **academic research automation** by retrieving structured results from Google Scholar.
-- Provides a **developer-friendly guide** to using the SerpApi Google Scholar integration.
-- Ensures **reproducibility** with code examples and clear documentation.
+## 🧱 Tech stack
 
+- **Java 17+**, **Maven**
+- **SerpApi** – Google Scholar Author API
+- **Jackson** (JSON), `java.net.http` (HTTP client)
+- **SQLite** via `org.xerial:sqlite-jdbc`
+- (Optional) **DB Navigator** plugin for IntelliJ Community to view/run SQL
 ---
 
-## 🛠️ Technologies Used
-- **SerpApi – Google Scholar API**
-- **JSON** (response format)
-- **Python, Node.js, Java** (example integrations)
-- **GitHub** (project hosting and collaboration)
-
----
-
-# 📑 Technical Report – Google Scholar API (SerpApi)
-
-## 1. Endpoints
-Base URL:
-```
-https://serpapi.com/search
-```
-
-- **Google Scholar Author Search**
-  ```
-  https://serpapi.com/search?engine=google_scholar_author
-  ```
-
-- **Google Scholar Search (Articles/Keywords)**
-  ```
-  https://serpapi.com/search?engine=google_scholar
-  ```
-
----
 
 ## 2. Authentication Methods
 - Sign up at [https://serpapi.com](https://serpapi.com).
@@ -74,38 +59,29 @@ https://serpapi.com/search?engine=google_scholar&q=machine+learning&api_key=YOUR
 
 ---
 
-## 3. Query Parameters
+## 🗄️3. Database schema (SQLite)
 
-| Parameter | Description | Example |
-|-----------|-------------|---------|
-| `q` | Search query string | `q=quantum+computing` |
-| `engine` | Specifies the engine | `engine=google_scholar` |
-| `api_key` | Authentication key | `api_key=xxxx` |
-| `hl` | Language of results | `hl=en` |
-| `start` | Pagination offset | `start=10` |
-| `author_id` | Search by author ID | `author_id=AbC123XYZ` |
+Table: `articles`
 
----
+| column            | type     | notes |
+|-------------------|----------|------|
+| `id`              | INTEGER  | primary key, autoincrement |
+| `researcher_id`   | TEXT     | author’s Google Scholar ID (`user=` in profile URL) |
+| `researcher_name` | TEXT     | resolved from API |
+| `title`           | TEXT     | article title |
+| `authors`         | TEXT     | comma-separated |
+| `publication_date`| TEXT     | store `YYYY-01-01` if you only have a year |
+| `abstract`        | TEXT     | may be null |
+| `link`            | TEXT     | article/citation link |
+| `keywords`        | TEXT     | simple keywords derived from the title |
+| `cited_by`        | INTEGER  | citation count (if available) |
+| `created_at`      | TEXT     | defaults to `datetime('now')` |
 
-## 4. Response Formats
-Responses are in **JSON**.
-
-Example:
-```json
-{
-  "organic_results": [
-    {
-      "title": "Deep Learning",
-      "authors": "Y. LeCun, Y. Bengio, G. Hinton",
-      "publication_date": "2015",
-      "link": "https://scholar.google.com/scholar?cluster=123456",
-      "cited_by": 20000
-    }
-  ]
-}
-```
+**Constraint:** `UNIQUE(researcher_id, title)` — prevents duplicates on re-import.
 
 ---
+
+
 
 ## 5. Usage Limits
 - **Free Plan**: 100 searches/month.
@@ -113,166 +89,201 @@ Example:
 - Higher usage requires a paid plan.
 
 ---
+## 🔑 SerpApi key
 
-## 6. Code Examples
+In **IntelliJ → Run → Edit Configurations…**, open the run config for `Main` and add:
 
-### Python
-```python
-import requests
+- **Environment variables** → `SERPAPI_API_KEY=your_key_here`
 
-params = {
-    "engine": "google_scholar",
-    "q": "artificial intelligence",
-    "api_key": "YOUR_API_KEY"
-}
-
-response = requests.get("https://serpapi.com/search", params=params)
-data = response.json()
-
-for result in data.get("organic_results", []):
-    print(result["title"], "-", result["authors"])
-```
-
-### JavaScript (Node.js)
-```javascript
-const axios = require("axios");
-
-async function scholarSearch() {
-  const response = await axios.get("https://serpapi.com/search", {
-    params: {
-      engine: "google_scholar",
-      q: "data science",
-      api_key: "YOUR_API_KEY"
-    }
-  });
-  console.log(response.data.organic_results);
-}
-
-scholarSearch();
-```
-
-### Java (HttpClient)
-```java
-import java.net.http.*;
-import java.net.URI;
-
-public class ScholarSearch {
-    public static void main(String[] args) throws Exception {
-        HttpClient client = HttpClient.newHttpClient();
-        HttpRequest request = HttpRequest.newBuilder()
-            .uri(URI.create("https://serpapi.com/search?engine=google_scholar&q=machine+learning&api_key=YOUR_API_KEY"))
-            .build();
-
-        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-        System.out.println(response.body());
-    }
-}
-```
+(Alternatively, pass `-DSERPAPI_API_KEY=...` in VM options.)
 
 ---
 
+## 👤 Get the two `author_id`s
 
-## 🚀 Features
-- Input: either a **Google Scholar profile URL** or a plain **author_id**.
-- Extracts and displays:
-    - Author name and affiliation
-    - Citation metrics (**Citations, h-index, i10-index**)
-    - Top 5 articles with title, year, publication, and citation count
-- Clean **console view** with formatted tables
-- Error handling with friendly messages
+1) Open each researcher’s **Google Scholar profile**.
+2) Copy the value of `user` from the URL (e.g. `...citations?user=FyYiDG0AAAAJ&hl=es` → **`FyYiDG0AAAAJ`**).
+3) You can also paste the **full profile URL**; the app will extract/clean the ID for you.
 
 ---
 
-## 🛠️ Technologies
-- **Java 17+**
-- **Maven** for dependency management and build
-- **Apache HttpClient 5** – to make HTTP requests
-- **Jackson** – to parse JSON responses
-- **SerpApi** – external API provider for Google Scholar data
+## ▶️ Run the importer
 
----
+**IntelliJ (recommended):**
 
-## 📂 Project Structure
-```
-src/main/java/org/example/scholar/
-│
-├── model/         # Data models (AuthorProfile, etc.)
-├── view/          # ConsoleView: displays data in the console
-├── service/       # SerpApiClient + ScholarUtils (API integration)
-└── controller/    # AuthorController: coordinates MVC flow
-```
-
----
-
-## ⚙️ Setup
-
-### 1. Clone the repository
-```bash
-git clone https://github.com/your-username/scholar-mvc.git
-cd scholar-mvc
-```
-
-### 2. Configure your SerpApi key
-Get a free API key from [SerpApi](https://serpapi.com/).  
-Set the environment variable `SERPAPI_KEY`:
-
-- **Linux / Mac (bash):**
-  ```bash
-  export SERPAPI_KEY=your_api_key_here
+- **Run → Edit Configurations…** → select the config for `Main`
+- **Program arguments**:
   ```
-
-- **Windows PowerShell:**
-  ```powershell
-  setx SERPAPI_KEY "your_api_key_here"
+  <AUTHOR_ID_1> <AUTHOR_ID_2> 3
   ```
+  Example:
+  ```
+  FyYiDG0AAAAJ Mxgb_LUAAAAJ 3
+  ```
+  (Pasting full profile URLs also works.)
 
-*(Restart your terminal or IDE after setting the variable)*
+Run it. The app creates/updates **`scholar.db`** in your project root.
 
----
-
-## ▶️ Build and Run
-
-### Compile with Maven
+**Maven (CLI) alternative:**
 ```bash
-mvn clean package
-```
-
-### Run with author_id
-```bash
-java -cp target/scholar-mvc-1.0.0.jar org.example.scholar.Main FyYiDG0AAAAJ
-```
-
-### Run with profile URL
-```bash
-java -cp target/scholar-mvc-1.0.0.jar org.example.scholar.Main "https://scholar.google.com/citations?user=FyYiDG0AAAAJ"
+mvn -q -DskipTests exec:java \
+  -Dexec.mainClass=org.example.scholar.Main \
+  -Dexec.args="FyYiDG0AAAAJ Mxgb_LUAAAAJ 3"
 ```
 
 ---
 
-## 📊 Example Output
+## 🔍 Verify the data
 
+### Option A — Use the provided verifier
+Run `org.example.scholar.Verify` (optionally pass an author ID as an argument).
+
+Expected console output:
 ```
-=== Google Scholar (SerpApi) - Demo MVC ===
-(SERPAPI_KEY: ****ecd6)
+== Count by researcher_id ==
+FyYiDG0AAAAJ -> 3 rows
+Mxgb_LUAAAAJ -> 3 rows
 
-=== AUTHOR PROFILE ===
-Name: Sandra Rodil
-Affiliation: Instituto de Investigaciones en Materiales, Universidad Nacional Autónoma de México
-
-Metrics:
-+----------------+---------+
-| Citations      |    8454 |
-| h-index        |      49 |
-| i10-index      |     132 |
-+----------------+---------+
-
-Top Articles:
- - Interpretation of infrared and Raman spectra of amorphous carbon nitrides (2003) · Physical Review B | Citations: 930
-   https://scholar.google.com/citations?view_op=view_citation&citation_for_view=FyYiDG0AAAAJ:u-x6o8ySG0sC
- - Density, fraction, and cross-sectional structure of amorphous carbon films (2000) · Physical Review B | Citations: 717
-   https://scholar.google.com/citations?view_op=view_citation&citation_for_view=FyYiDG0AAAAJ:u5HHmVD_uO8C
- ...
+== Articles for FyYiDG0AAAAJ ==
+01) ...
+02) ...
+03) ...
 ```
+
+### Option B — SQL (DB Navigator or any SQLite client)
+```sql
+-- 0) List tables (sanity check)
+SELECT name FROM sqlite_master WHERE type='table';
+
+-- 1) Any “dirty” IDs (should be 0)
+SELECT COUNT(*) AS dirty FROM articles WHERE researcher_id LIKE '%&%';
+
+-- 2) Count per author (should be 3 and 3 if available)
+SELECT researcher_id, COUNT(*) AS n_rows
+FROM articles
+GROUP BY researcher_id;
+
+-- 3) The 3 rows of a given author
+SELECT title, COALESCE(cited_by,0) AS cited_by, link
+FROM articles
+WHERE researcher_id = 'FyYiDG0AAAAJ'
+ORDER BY cited_by DESC, title;
+```
+
+---
+
+## 🧽 Optional: normalize old data (if IDs were stored with `&hl=...`)
+
+Run this **safe migration** once to clean `researcher_id` and consolidate duplicates by `(researcher_id, title)` keeping the highest `cited_by`:
+
+```sql
+CREATE TABLE articles_new (
+  id               INTEGER PRIMARY KEY AUTOINCREMENT,
+  researcher_id    TEXT    NOT NULL,
+  researcher_name  TEXT,
+  title            TEXT    NOT NULL,
+  authors          TEXT,
+  publication_date TEXT,
+  abstract         TEXT,
+  link             TEXT,
+  keywords         TEXT,
+  cited_by         INTEGER,
+  created_at       TEXT DEFAULT (datetime('now')),
+  UNIQUE(researcher_id, title)
+);
+
+INSERT INTO articles_new (
+  researcher_id, researcher_name, title, authors, publication_date,
+  abstract, link, keywords, cited_by, created_at
+)
+SELECT
+  CASE
+    WHEN instr(researcher_id, '&') = 0 THEN researcher_id
+    ELSE substr(researcher_id, 1, instr(researcher_id, '&') - 1)
+  END AS researcher_id_clean,
+  researcher_name,
+  title,
+  authors,
+  publication_date,
+  abstract,
+  link,
+  keywords,
+  MAX(COALESCE(cited_by, 0)) AS cited_by,
+  MIN(created_at)
+FROM articles
+GROUP BY researcher_id_clean, title;
+
+DROP TABLE articles;
+ALTER TABLE articles_new RENAME TO articles;
+```
+
+---
+
+## 🛡️ Error handling (what you’ll see)
+
+- **HTTP 429** (rate limit): clear message; retry later.
+- **HTTP 4xx/5xx**: status code and response body are printed.
+- **Missing fields**: `abstract` may be null; year-only dates stored as `YYYY-01-01`.
+- **Idempotency**: re-running upserts (no duplicates) via unique constraint.
+
+---
+
+## 🧩 Troubleshooting
+
+- **“Define SERPAPI_API_KEY…”** → set the env var in the Run Configuration.
+- **No `articles` table** → run the importer once; it creates the schema.
+- **IntelliJ Community has no Database tool** → install **DB Navigator** or run `Verify.java`.
+- **DB Navigator shows a filter error** when opening the table → use **Remove Filter** (right-click table → Data → Filter → Remove).
+
+---
+
+## 📦 Deliverables checklist
+
+- [ ] Source code (importer, verifier, optional migrator).
+- [ ] `scholar.db` with **2 authors × 3 articles** (if available from API).
+- [ ] Basic error handling in place.
+- [ ] Repo pushed to GitHub and **Digital NAO** has access.
+
+---
+
+## 💰 Cost estimate (ballpark)
+
+**Assumptions (adjust as needed):**
+- Each run makes **2 requests** (one per author) and fetches 3 articles per request.
+- You will execute **N runs per month** for testing/demos.
+- Pricing changes; always check SerpApi’s current plans.
+
+**1) API usage (SerpApi):**
+- Requests per run: ~2
+- Example monthly usage:
+    - ~**50 runs/month** → ~**100 requests** → often fits **free tier (~100 req/mo)**.
+    - **200–500 runs/month** → **400–1,000 requests** → likely **entry paid tier**.
+- Ballpark **paid tier**: ≈ **USD $50/month** (few thousand requests).
+
+**2) Developer time (one-time):**
+- Setup + coding + verification: **~6–10 hours**.
+- At **USD $15–$40/hour** → **USD $90–$400** one-time.
+
+**3) Hosting/DB:**
+- **SQLite** file → **$0**.
+- If migrating to managed MySQL/PostgreSQL later: **$5–$15/month** typical.
+
+**Summary:**
+- **Recurring:** **$0/month** (free tier) to **~$50/month** depending on runs.
+- **One-time:** **$90–$400** for development/packaging (varies by rates and what’s already coded).
+
+---
+
+## 📜 License & Terms
+
+Educational use. Review SerpApi’s Terms of Service and rate-limit policies before production use.
+
+---
+
+## ✅ Conclusion
+
+This sprint proves end-to-end integration from **Google Scholar (via SerpApi)** to **SQLite**, with clear run/verify steps, duplicate protection, and error handling. It can be extended to other DBMS or scaled to fetch more fields as your project grows.
+
 
 ---
 ## 📌 Utility and Scope Scenarios
