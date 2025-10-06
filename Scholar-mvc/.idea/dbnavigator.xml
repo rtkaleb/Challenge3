@@ -88,6 +88,16 @@ FROM articles
 WHERE researcher_id = 'Mxgb_LUAAAAJ'
 ORDER BY cited_by DESC, title;
 
+-- ¿Cuántas filas hay?
+SELECT COUNT(*) AS total FROM articles;
+
+-- Mira algunos registros
+SELECT researcher_id, title, COALESCE(cited_by,0) AS cited_by, link
+FROM articles
+ORDER BY researcher_id, cited_by DESC, title
+LIMIT 20;
+
+
 COMMIT;
 PRAGMA foreign_keys=on;]]></console>
     </connection>
@@ -98,13 +108,18 @@ PRAGMA foreign_keys=on;]]></console>
   <component name="DBNavigator.Project.DatabaseFileManager">
     <open-files>
       <object connection-id="7ee75ee4-3121-446f-ba23-e9c17f86fc55" object-ref="consoles/Connection" />
+      <object connection-id="7ee75ee4-3121-446f-ba23-e9c17f86fc55" object-ref="schemas/main/tables/articles" />
     </open-files>
   </component>
   <component name="DBNavigator.Project.DatabaseSessionManager">
     <connection id="7ee75ee4-3121-446f-ba23-e9c17f86fc55" />
   </component>
   <component name="DBNavigator.Project.DatasetFilterManager">
-    <filter-actions connection-id="7ee75ee4-3121-446f-ba23-e9c17f86fc55" dataset="main.articles" active-filter-id="" />
+    <filter-actions connection-id="7ee75ee4-3121-446f-ba23-e9c17f86fc55" dataset="main.articles" active-filter-id="">
+      <filter id="e30cffdd-feb4-4e7e-9b43-b3d1601b86fe" name="Filter" temporary="false" custom-name="false" type="basic" join-type="AND">
+        <condition column="id" operator="=" value="" active="true" />
+      </filter>
+    </filter-actions>
   </component>
   <component name="DBNavigator.Project.ExecutionManager">
     <retain-sticky-names value="false" />
